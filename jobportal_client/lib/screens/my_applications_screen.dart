@@ -48,7 +48,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/applications/user/$userEmail'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/applications/user/$userEmail'),
       );
 
       if (response.statusCode == 200) {

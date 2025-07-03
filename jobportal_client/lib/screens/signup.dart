@@ -11,7 +11,7 @@ import 'dart:convert';
   final _passwordController = TextEditingController();
 
   Future<void> _signup(BuildContext context) async {
-    final url = Uri.parse('http://localhost:5000/api/users/register');
+    final url = Uri.parse('https://job-portal-8rv9.onrender.com/api/users/register');
 
     final response = await http.post(
       url,

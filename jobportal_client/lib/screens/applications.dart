@@ -24,7 +24,7 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
     });
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/applications'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/applications'),
       );
 
       if (response.statusCode == 200) {

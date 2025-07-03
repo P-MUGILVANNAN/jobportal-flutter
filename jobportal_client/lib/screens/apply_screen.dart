@@ -164,7 +164,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:5000/api/apply'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/apply'),
       );
 
       request.headers['Authorization'] = 'Bearer $token';

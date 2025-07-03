@@ -29,7 +29,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/jobs'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs'),
       );
 
       if (response.statusCode == 200) {
@@ -483,7 +483,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 onPressed: () async {
                   try {
                     final response = await http.delete(
-                      Uri.parse('http://localhost:5000/api/jobs/$jobId'),
+                      Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs/$jobId'),
                     );
 
                     if (response.statusCode == 200) {
@@ -654,13 +654,13 @@ class _PostJobPageState extends State<PostJobPage> {
             widget.isEditing
                 ? await http.put(
                   Uri.parse(
-                    'http://localhost:5000/api/jobs/${widget.job!['_id']}',
+                    'https://job-portal-8rv9.onrender.com/api/jobs/${widget.job!['_id']}',
                   ),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode(jobData),
                 )
                 : await http.post(
-                  Uri.parse('http://localhost:5000/api/jobs'),
+                  Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode(jobData),
                 );

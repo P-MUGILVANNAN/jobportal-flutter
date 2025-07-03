@@ -50,7 +50,7 @@ class _UserDashboardState extends State<UserDashboard> {
       }
 
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/users/profile'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/users/profile'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -133,7 +133,7 @@ class _UserDashboardState extends State<UserDashboard> {
       };
 
       final response = await http.put(
-        Uri.parse('http://localhost:5000/api/users/update-profile'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/users/update-profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ class _UserDashboardState extends State<UserDashboard> {
     });
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/jobs'),
+        Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs'),
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);

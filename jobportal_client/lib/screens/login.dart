@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   Future<void> _login(BuildContext context) async {
-    final url = Uri.parse('http://localhost:5000/api/users/login');
+    final url = Uri.parse('https://job-portal-8rv9.onrender.com/api/users/login');
 
     try {
       final response = await http.post(
