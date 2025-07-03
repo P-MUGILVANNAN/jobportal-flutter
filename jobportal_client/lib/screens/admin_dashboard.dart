@@ -15,7 +15,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
   bool _isLoading = true;
   bool _isDrawerOpen = false;
-  bool _isMobile = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -38,17 +38,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
           _isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to fetch jobs')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch jobs')),
+        );
         setState(() {
           _isLoading = false;
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
       setState(() {
         _isLoading = false;
       });
@@ -67,13 +67,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      if (_isMobile) {
-        _isDrawerOpen = false;
-      }
+      _isDrawerOpen = false;
+      _scaffoldKey.currentState?.openEndDrawer();
     });
   }
 
   void _toggleDrawer() {
+    if (_isDrawerOpen) {
+      _scaffoldKey.currentState?.openEndDrawer();
+    } else {
+      _scaffoldKey.currentState?.openDrawer();
+    }
     setState(() {
       _isDrawerOpen = !_isDrawerOpen;
     });
@@ -81,120 +85,77 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    // Re-check screen size on build in case of orientation change
-    final mediaQuery = MediaQuery.of(context);
-    final isMobileNow = mediaQuery.size.width < 768;
-    if (isMobileNow != _isMobile) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _isMobile = isMobileNow;
-        });
-      });
-    }
-
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
-        title: Text("FIIT JOBS ADMIN PANEL",style: TextStyle(color: Colors.white),),
+        title: Text("FIIT JOBS ADMIN PANEL", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue[800],
         elevation: 0,
         centerTitle: true,
-        leading:
-            _isMobile
-                ? IconButton(icon: Icon(Icons.menu,color: Colors.white,), onPressed: _toggleDrawer)
-                : null,
+        leading: IconButton(
+          icon: Icon(Icons.menu, color: Colors.white),
+          onPressed: _toggleDrawer,
+        ),
       ),
-      body: _buildBody(),
-      floatingActionButton:
-          _selectedIndex == 1
-              ? FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => PostJobPage()),
-                  ).then((_) => _fetchJobs());
-                },
-                child: Icon(Icons.add),
-                backgroundColor: const Color.fromARGB(255, 171, 210, 255),
-                tooltip: 'Post New Job',
-              )
-              : null,
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isMobile) {
-      return Stack(
-        children: [
-          _buildMainContent(),
-          if (_isDrawerOpen) _buildMobileDrawer(),
-        ],
-      );
-    } else {
-      return Row(
-        children: [
-          _buildDesktopSidebar(),
-          Expanded(child: _buildMainContent()),
-        ],
-      );
-    }
-  }
-
-  Widget _buildDesktopSidebar() {
-    return Container(
-      width: 250,
-      color: Colors.blue[50],
-      child: Column(
-        children: [
-          SizedBox(height: 20),
-          _buildNavItem(Icons.dashboard, "Dashboard", 0),
-          _buildNavItem(Icons.work, "Job Listings", 1),
-          _buildNavItem(Icons.people, "Applications", 2),
-          Spacer(),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.logout, color: Colors.blue[800]),
-            title: Text("Logout", style: TextStyle(color: Colors.blue[800])),
-            onTap: () => _logout(context),
-          ),
-          SizedBox(height: 20),
-        ],
-      ),
+      drawer: _buildMobileDrawer(),
+      body: _buildMainContent(),
+      floatingActionButton: _selectedIndex == 1
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PostJobPage()),
+                ).then((_) => _fetchJobs());
+              },
+              child: Icon(Icons.add),
+              backgroundColor: const Color.fromARGB(255, 171, 210, 255),
+              tooltip: 'Post New Job',
+            )
+          : null,
     );
   }
 
   Widget _buildMobileDrawer() {
-    return Positioned(
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: MediaQuery.of(context).size.width * 0.4,
-      child: Material(
-        elevation: 16.0,
-        child: Container(
-          color: Colors.blue[50],
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _buildNavItem(Icons.dashboard, "Dashboard", 0),
-                    _buildNavItem(Icons.work, "Job Listings", 1),
-                    _buildNavItem(Icons.people, "Applications", 2),
-                    Divider(),
-                    ListTile(
-                      leading: Icon(Icons.logout, color: Colors.blue[800]),
-                      title: Text(
-                        "Logout",
-                        style: TextStyle(color: Colors.blue[800]),
+    return Drawer(
+      child: Container(
+        color: Colors.blue[50],
+        child: Column(
+          children: [
+            DrawerHeader(
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, size: 40, color: Colors.blue[800]),
+                  ),
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0), // Added padding to align with menu items
+                    child: Text(
+                      'Admin Panel',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      onTap: () => _logout(context),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            _buildNavItem(Icons.dashboard, "Dashboard", 0),
+            _buildNavItem(Icons.work, "Job Listings", 1),
+            _buildNavItem(Icons.people, "Applications", 2),
+            Spacer(),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.logout, color: Colors.blue[800]),
+              title: Text("Logout", style: TextStyle(color: Colors.blue[800])),
+              onTap: () => _logout(context),
+            ),
+            SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -210,8 +171,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         title,
         style: TextStyle(
           color: _selectedIndex == index ? Colors.blue[800] : Colors.grey,
-          fontWeight:
-              _selectedIndex == index ? FontWeight.bold : FontWeight.normal,
+          fontWeight: _selectedIndex == index ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       selected: _selectedIndex == index,
@@ -222,10 +182,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildMainContent() {
     return AnimatedSwitcher(
       duration: Duration(milliseconds: 300),
-      child:
-          _isLoading
-              ? Center(child: CircularProgressIndicator())
-              : _getCurrentPage(),
+      child: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _getCurrentPage(),
     );
   }
 
@@ -253,12 +212,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20),
-          // Stats Cards
-          Row(
-            children: [
-              _buildStatCard('Total Jobs', jobs.length.toString(), Icons.work),
-            ],
-          ),
+          // Stats Card
+          _buildStatCard('Total Jobs', jobs.length.toString(), Icons.work),
           SizedBox(height: 30),
           Text(
             'Recent Job Postings',
@@ -272,28 +227,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon) {
-    return Expanded(
-      child: Card(
-        elevation: 3,
-        child: Padding(
-          padding: EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: TextStyle(color: Colors.grey)),
-                  Icon(icon, color: Colors.blue[800]),
-                ],
-              ),
-              SizedBox(height: 10),
-              Text(
-                value,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+    return Card(
+      elevation: 3,
+      child: Padding(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: TextStyle(color: Colors.grey)),
+                Icon(icon, color: Colors.blue[800]),
+              ],
+            ),
+            SizedBox(height: 10),
+            Text(
+              value,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
     );
@@ -344,8 +297,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     image: DecorationImage(
@@ -356,7 +309,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ),
                   ),
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,43 +317,45 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Text(
                         job['title'],
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         job['company'],
-                        style: TextStyle(fontSize: 16, color: Colors.blue[800]),
+                        style: TextStyle(fontSize: 14, color: Colors.blue[800]),
                       ),
                       SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          Chip(
-                            label: Text(job['location']),
-                            backgroundColor: Colors.blue[50],
-                          ),
-                          Chip(
-                            label: Text(job['experience']),
-                            backgroundColor: Colors.blue[50],
-                          ),
-                          Chip(
-                            label: Text(job['salary']),
-                            backgroundColor: Colors.blue[50],
-                          ),
-                        ],
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            Chip(
+                              label: Text(job['location']),
+                              backgroundColor: Colors.blue[50],
+                            ),
+                            SizedBox(width: 4),
+                            Chip(
+                              label: Text(job['experience']),
+                              backgroundColor: Colors.blue[50],
+                            ),
+                            SizedBox(width: 4),
+                            Chip(
+                              label: Text(job['salary']),
+                              backgroundColor: Colors.blue[50],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 PopupMenuButton(
-                  itemBuilder:
-                      (context) => [
-                        PopupMenuItem(child: Text("Edit"), value: "edit"),
-                        PopupMenuItem(child: Text("Delete"), value: "delete"),
-                      ],
+                  itemBuilder: (context) => [
+                    PopupMenuItem(child: Text("Edit"), value: "edit"),
+                    PopupMenuItem(child: Text("Delete"), value: "delete"),
+                  ],
                   onSelected: (value) {
                     if (value == "edit") {
                       _navigateToEditJob(context, job, jobs.indexOf(job));
@@ -415,45 +370,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 12),
             Text(
               'Job Description:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text(job['description']),
-            SizedBox(height: 8),
+            SizedBox(height: 6),
+            Text(
+              job['description'],
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: 6),
             Text(
               'Posted on: ${job['postingDate']}',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            SizedBox(height: 8),
             if (job['skills'] != null && job['skills'].toString().isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: 6),
                   Text(
                     'Skills Required:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        (job['skills'] is String
-                                ? (job['skills'] as String)
-                                    .split(',')
-                                    .map((e) => e.trim())
-                                    .toList()
-                                : List<String>.from(job['skills']))
-                            .map(
-                              (skill) => Chip(
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: (job['skills'] is String
+                              ? (job['skills'] as String)
+                                  .split(',')
+                                  .map((e) => e.trim())
+                                  .toList()
+                              : List<String>.from(job['skills']))
+                          .map(
+                            (skill) => Padding(
+                              padding: const EdgeInsets.only(right: 4.0),
+                              child: Chip(
                                 label: Text(skill),
                                 backgroundColor: Colors.blue[50],
                               ),
-                            )
-                            .toList(),
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
                 ],
               ),
@@ -463,52 +425,47 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildApplications() {
-    return ApplicationsPage();
-  }
-
   void _showDeleteConfirmation(BuildContext context, String jobId, int index) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Delete Job'),
-            content: Text('Are you sure you want to delete this job posting?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  try {
-                    final response = await http.delete(
-                      Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs/$jobId'),
-                    );
-
-                    if (response.statusCode == 200) {
-                      setState(() {
-                        jobs.removeAt(index);
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Job deleted successfully')),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to delete job')),
-                      );
-                    }
-                  } catch (e) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  }
-                  Navigator.pop(context);
-                },
-                child: Text('Delete', style: TextStyle(color: Colors.red)),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('Delete Job'),
+        content: Text('Are you sure you want to delete this job posting?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () async {
+              try {
+                final response = await http.delete(
+                  Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs/$jobId'),
+                );
+
+                if (response.statusCode == 200) {
+                  setState(() {
+                    jobs.removeAt(index);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Job deleted successfully')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete job')),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              }
+              Navigator.pop(context);
+            },
+            child: Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -549,69 +506,32 @@ class _PostJobPageState extends State<PostJobPage> {
 
   String _experienceLevel = 'Fresher';
   String? _selectedYears;
-  final List<String> _experienceYears = List.generate(
-    15,
-    (index) => '${index + 1}',
-  );
+  final List<String> _experienceYears = List.generate(15, (index) => '${index + 1}');
 
-  // Skills related variables
   List<String> _selectedSkills = [];
   final List<String> _commonSkills = [
-    'Html',
-    'Css',
-    'Javascript',
-    'Bootstrap',
-    'Tailwind CSS',
-    'React',
-    'Angular',
-    'Java',
-    'Python',
-    'Node.js',
-    'Express.js',
-    'Spring Boot',
-    'UI/UX',
-    'Django',
-    'Flutter',
-    'Git',
-    'Github',
-    'SQL',
-    'NoSQL',
-    'Networking',
-    'Cloud',
-    'Linux',
-    'Hardware',
+    'Html', 'Css', 'Javascript', 'Bootstrap', 'Tailwind CSS', 
+    'React', 'Angular', 'Java', 'Python', 'Node.js', 
+    'Express.js', 'Spring Boot', 'UI/UX', 'Django', 'Flutter',
+    'Git', 'Github', 'SQL', 'NoSQL', 'Networking', 
+    'Cloud', 'Linux', 'Hardware',
   ];
 
   @override
   void initState() {
     super.initState();
-    _companyController = TextEditingController(
-      text: widget.job?['company'] ?? '',
-    );
+    _companyController = TextEditingController(text: widget.job?['company'] ?? '');
     _titleController = TextEditingController(text: widget.job?['title'] ?? '');
     _roleController = TextEditingController(text: widget.job?['role'] ?? '');
-    _locationController = TextEditingController(
-      text: widget.job?['location'] ?? '',
-    );
-    _salaryController = TextEditingController(
-      text: widget.job?['salary'] ?? '',
-    );
-    _descriptionController = TextEditingController(
-      text: widget.job?['description'] ?? '',
-    );
-    _imageUrlController = TextEditingController(
-      text: widget.job?['image'] ?? '',
-    );
+    _locationController = TextEditingController(text: widget.job?['location'] ?? '');
+    _salaryController = TextEditingController(text: widget.job?['salary'] ?? '');
+    _descriptionController = TextEditingController(text: widget.job?['description'] ?? '');
+    _imageUrlController = TextEditingController(text: widget.job?['image'] ?? '');
     _skillsController = TextEditingController();
 
-    // Initialize selected skills if editing
     if (widget.job?['skills'] != null) {
       if (widget.job!['skills'] is String) {
-        _selectedSkills =
-            (widget.job!['skills'] as String)
-                .split(',')
-                .map((e) => e.trim())
-                .toList();
+        _selectedSkills = (widget.job!['skills'] as String).split(',').map((e) => e.trim()).toList();
       } else if (widget.job!['skills'] is List) {
         _selectedSkills = List<String>.from(widget.job!['skills']);
       }
@@ -631,8 +551,7 @@ class _PostJobPageState extends State<PostJobPage> {
 
   Future<void> _submitJob() async {
     if (_formKey.currentState!.validate()) {
-      String experienceText =
-          _experienceLevel == 'Fresher' ? 'Fresher' : '$_selectedYears+ years';
+      String experienceText = _experienceLevel == 'Fresher' ? 'Fresher' : '$_selectedYears+ years';
 
       final jobData = {
         'company': _companyController.text,
@@ -643,52 +562,39 @@ class _PostJobPageState extends State<PostJobPage> {
         'salary': _salaryController.text,
         'description': _descriptionController.text,
         'skills': _selectedSkills.join(', '),
-        'postingDate':
-            widget.job?['postingDate'] ??
-            DateTime.now().toString().split(' ')[0],
+        'postingDate': widget.job?['postingDate'] ?? DateTime.now().toString().split(' ')[0],
         'image': _imageUrlController.text,
       };
 
       try {
-        final response =
-            widget.isEditing
-                ? await http.put(
-                  Uri.parse(
-                    'https://job-portal-8rv9.onrender.com/api/jobs/${widget.job!['_id']}',
-                  ),
-                  headers: {'Content-Type': 'application/json'},
-                  body: jsonEncode(jobData),
-                )
-                : await http.post(
-                  Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs'),
-                  headers: {'Content-Type': 'application/json'},
-                  body: jsonEncode(jobData),
-                );
+        final response = widget.isEditing
+            ? await http.put(
+                Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs/${widget.job!['_id']}'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(jobData),
+              )
+            : await http.post(
+                Uri.parse('https://job-portal-8rv9.onrender.com/api/jobs'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(jobData),
+              );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                widget.isEditing
-                    ? 'Job updated successfully'
-                    : 'Job posted successfully',
-              ),
+              content: Text(widget.isEditing ? 'Job updated successfully' : 'Job posted successfully'),
             ),
           );
           Navigator.pop(context);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Failed to ${widget.isEditing ? 'update' : 'post'} job: ${response.body}',
-              ),
+              content: Text('Failed to ${widget.isEditing ? 'update' : 'post'} job: ${response.body}'),
             ),
           );
         }
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -727,8 +633,7 @@ class _PostJobPageState extends State<PostJobPage> {
                   labelText: 'Company Logo URL',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (value) => value!.isEmpty ? 'Please enter image URL' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter image URL' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
@@ -737,9 +642,7 @@ class _PostJobPageState extends State<PostJobPage> {
                   labelText: 'Company Name',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (value) =>
-                        value!.isEmpty ? 'Please enter company name' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter company name' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
@@ -748,8 +651,7 @@ class _PostJobPageState extends State<PostJobPage> {
                   labelText: 'Job Title',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (value) => value!.isEmpty ? 'Please enter job title' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter job title' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
@@ -758,8 +660,7 @@ class _PostJobPageState extends State<PostJobPage> {
                   labelText: 'Role',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (value) => value!.isEmpty ? 'Please enter role' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter role' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
@@ -768,8 +669,7 @@ class _PostJobPageState extends State<PostJobPage> {
                   labelText: 'Location',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (value) => value!.isEmpty ? 'Please enter location' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter location' : null,
               ),
               SizedBox(height: 16),
               Column(
@@ -815,21 +715,19 @@ class _PostJobPageState extends State<PostJobPage> {
                         labelText: 'Years of Experience',
                         border: OutlineInputBorder(),
                       ),
-                      items:
-                          _experienceYears.map((year) {
-                            return DropdownMenuItem(
-                              value: year,
-                              child: Text('$year years'),
-                            );
-                          }).toList(),
+                      items: _experienceYears.map((year) {
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text('$year years'),
+                        );
+                      }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedYears = value;
                         });
                       },
                       validator: (value) {
-                        if (_experienceLevel == 'Experienced' &&
-                            value == null) {
+                        if (_experienceLevel == 'Experienced' && value == null) {
                           return 'Please select years of experience';
                         }
                         return null;
@@ -845,37 +743,28 @@ class _PostJobPageState extends State<PostJobPage> {
                   labelText: 'Salary Range',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (value) =>
-                        value!.isEmpty ? 'Please enter salary range' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter salary range' : null,
               ),
-
-              // Skills Section
               SizedBox(height: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Skills Needed', style: TextStyle(fontSize: 16)),
                   SizedBox(height: 8),
-
-                  // Selected Skills Chips
                   if (_selectedSkills.isNotEmpty) ...[
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children:
-                          _selectedSkills.map((skill) {
-                            return Chip(
-                              label: Text(skill),
-                              deleteIcon: Icon(Icons.close, size: 18),
-                              onDeleted: () => _removeSkill(skill),
-                            );
-                          }).toList(),
+                      children: _selectedSkills.map((skill) {
+                        return Chip(
+                          label: Text(skill),
+                          deleteIcon: Icon(Icons.close, size: 18),
+                          onDeleted: () => _removeSkill(skill),
+                        );
+                      }).toList(),
                     ),
                     SizedBox(height: 12),
                   ],
-
-                  // Skill Input
                   Row(
                     children: [
                       Expanded(
@@ -898,33 +787,28 @@ class _PostJobPageState extends State<PostJobPage> {
                       ),
                     ],
                   ),
-
-                  // Common Skills Suggestions
                   SizedBox(height: 8),
                   Text('Common Skills:', style: TextStyle(color: Colors.grey)),
                   SizedBox(height: 4),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children:
-                        _commonSkills
-                            .where((skill) => !_selectedSkills.contains(skill))
-                            .map((skill) {
-                              return ActionChip(
-                                label: Text(skill),
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedSkills.add(skill);
-                                  });
-                                },
-                                backgroundColor: Colors.blue.shade50,
-                              );
-                            })
-                            .toList(),
+                    children: _commonSkills.where((skill) => !_selectedSkills.contains(skill))
+                        .map((skill) {
+                          return ActionChip(
+                            label: Text(skill),
+                            onPressed: () {
+                              setState(() {
+                                _selectedSkills.add(skill);
+                              });
+                            },
+                            backgroundColor: Colors.blue.shade50,
+                          );
+                        })
+                        .toList(),
                   ),
                 ],
               ),
-
               SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
@@ -933,9 +817,7 @@ class _PostJobPageState extends State<PostJobPage> {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 5,
-                validator:
-                    (value) =>
-                        value!.isEmpty ? 'Please enter job description' : null,
+                validator: (value) => value!.isEmpty ? 'Please enter job description' : null,
               ),
               SizedBox(height: 20),
               ElevatedButton(
