@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 class ApplicationsPage extends StatefulWidget {
   @override
@@ -18,6 +22,33 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
     _fetchApplications();
   }
 
+  Future<void> _downloadResume(String url) async {
+    var status = await Permission.manageExternalStorage.request();
+
+    if (status.isGranted) {
+      try {
+        Directory? dir = Directory('/storage/emulated/0/Download');
+        String fileName = url.split('/').last;
+        String savePath = "${dir.path}/$fileName";
+
+        Dio dio = Dio();
+        await dio.download(url, savePath);
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Downloaded to $savePath')));
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Storage permission denied')));
+    }
+  }
+
   Future<void> _fetchApplications() async {
     setState(() {
       _isLoading = true;
@@ -29,21 +60,23 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          applications = List<Map<String, dynamic>>.from(json.decode(response.body));
+          applications = List<Map<String, dynamic>>.from(
+            json.decode(response.body),
+          );
           _isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch applications')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to fetch applications')));
         setState(() {
           _isLoading = false;
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
       setState(() {
         _isLoading = false;
       });
@@ -56,15 +89,13 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
       appBar: AppBar(
         title: Text('Job Applications'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _fetchApplications,
-          ),
+          IconButton(icon: Icon(Icons.refresh), onPressed: _fetchApplications),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _buildApplicationsList(),
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : _buildApplicationsList(),
     );
   }
 
@@ -108,35 +139,50 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
                     ),
                     Text(
                       _formatDate(application['appliedAt']),
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ],
                 ),
                 Divider(height: 24, thickness: 1),
-                
+
                 // Applicant Info
                 _buildInfoRow('Name', application['name']),
                 _buildInfoRow('Email', application['email']),
                 _buildInfoRow('Phone', application['phone']),
                 _buildInfoRow('Qualification', application['qualification']),
-                
+
                 // Academic Marks
                 SizedBox(height: 12),
-                Text('Academic Performance', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Academic Performance',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: _buildScoreCard('10th', '${application['tenthMark']}%')),
+                    Expanded(
+                      child: _buildScoreCard(
+                        '10th',
+                        '${application['tenthMark']}%',
+                      ),
+                    ),
                     SizedBox(width: 8),
-                    Expanded(child: _buildScoreCard('12th', '${application['twelfthMark']}%')),
+                    Expanded(
+                      child: _buildScoreCard(
+                        '12th',
+                        '${application['twelfthMark']}%',
+                      ),
+                    ),
                     SizedBox(width: 8),
-                    Expanded(child: _buildScoreCard('Degree', '${application['degreePercentage']}%')),
+                    Expanded(
+                      child: _buildScoreCard(
+                        'Degree',
+                        '${application['degreePercentage']}%',
+                      ),
+                    ),
                   ],
                 ),
-                
+
                 // Skills
                 SizedBox(height: 16),
                 Text('Skills', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -144,12 +190,17 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: (application['skills'] as List<dynamic>).map((skill) => Chip(
-                    label: Text(skill.toString()),
-                    backgroundColor: Colors.blue[50],
-                  )).toList(),
+                  children:
+                      (application['skills'] as List<dynamic>)
+                          .map(
+                            (skill) => Chip(
+                              label: Text(skill.toString()),
+                              backgroundColor: Colors.blue[50],
+                            ),
+                          )
+                          .toList(),
                 ),
-                
+
                 // Relocation and Resume
                 SizedBox(height: 16),
                 Row(
@@ -157,14 +208,18 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
                     Icon(Icons.location_on, size: 18, color: Colors.grey),
                     SizedBox(width: 4),
                     Text(
-                      application['willingToRelocate'] ? 'Willing to relocate' : 'Not willing to relocate',
+                      application['willingToRelocate']
+                          ? 'Willing to relocate'
+                          : 'Not willing to relocate',
                       style: TextStyle(color: Colors.grey),
                     ),
                     Spacer(),
                     ElevatedButton.icon(
-                      onPressed: () => _launchResume(application['resume']['fileUrl']),
+                      onPressed:
+                          () =>
+                              _downloadResume(application['resume']['fileUrl']),
                       icon: Icon(Icons.file_download, size: 18),
-                      label: Text('View Resume'),
+                      label: Text('Download Resume'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[50],
                         foregroundColor: Colors.blue[800],
@@ -249,9 +304,9 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
     if (await canLaunch(url)) {
       await launch(url);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open resume')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open resume')));
     }
   }
 }
